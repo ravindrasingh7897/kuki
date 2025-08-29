@@ -8,6 +8,7 @@ import { DataTable } from "./DataTable";
 import { PollutionChart } from "./PollutionChart";
 import { DataFilters, FilterState } from "./DataFilters";
 import { mockPollutionData, getChartData, filterData, PollutionRecord } from "@/data/mockData";
+import { apiUrl } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 
 interface DashboardLayoutProps {
@@ -22,7 +23,7 @@ export const DashboardLayout = ({ onLogout }: DashboardLayoutProps) => {
       setLoading(true);
       try {
         const token = localStorage.getItem("token");
-        const response = await fetch("/api/opengds", {
+  const response = await fetch(apiUrl("/api/opengds"), {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -93,7 +94,7 @@ export const DashboardLayout = ({ onLogout }: DashboardLayoutProps) => {
         "Benzene (µg/m3)": record.benzene,
         "Toluene (µg/m3)": record.toluene,
       };
-      const response = await fetch(`/api/opengds/${record.id}`, {
+  const response = await fetch(apiUrl(`/api/opengds/${record.id}`), {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -104,7 +105,7 @@ export const DashboardLayout = ({ onLogout }: DashboardLayoutProps) => {
       if (!response.ok) throw new Error("Failed to update record");
       
       const fetchData = async () => {
-        const response = await fetch("/api/opengds", {
+  const response = await fetch(apiUrl("/api/opengds"), {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!response.ok) throw new Error("Failed to fetch data");
@@ -141,7 +142,7 @@ export const DashboardLayout = ({ onLogout }: DashboardLayoutProps) => {
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch(`/api/opengds/${id}`, {
+  const response = await fetch(apiUrl(`/api/opengds/${id}`), {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -149,7 +150,7 @@ export const DashboardLayout = ({ onLogout }: DashboardLayoutProps) => {
       });
       if (!response.ok) throw new Error("Failed to delete record");
       const fetchData = async () => {
-        const response = await fetch("/api/opengds", {
+  const response = await fetch(apiUrl("/api/opengds"), {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!response.ok) throw new Error("Failed to fetch data");
@@ -195,7 +196,7 @@ export const DashboardLayout = ({ onLogout }: DashboardLayoutProps) => {
         "Benzene (µg/m3)": newRecord.benzene,
         "Toluene (µg/m3)": newRecord.toluene,
       };
-      const response = await fetch("/api/opengds", {
+  const response = await fetch(apiUrl("/api/opengds"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -206,7 +207,7 @@ export const DashboardLayout = ({ onLogout }: DashboardLayoutProps) => {
       if (!response.ok) throw new Error("Failed to add record");
       
       const fetchData = async () => {
-        const response = await fetch("/api/opengds", {
+  const response = await fetch(apiUrl("/api/opengds"), {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!response.ok) throw new Error("Failed to fetch data");

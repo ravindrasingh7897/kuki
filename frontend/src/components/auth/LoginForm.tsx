@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Leaf } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { apiUrl } from "@/lib/api";
 
 interface LoginFormProps {
   onToggleMode: () => void;
@@ -21,7 +22,7 @@ export const LoginForm = ({ onToggleMode, onLoginSuccess }: LoginFormProps) => {
     e.preventDefault();
     setLoading(true);
     try {
-      const response = await fetch("/api/auth/login", {
+      const response = await fetch(apiUrl("/api/auth/login"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
