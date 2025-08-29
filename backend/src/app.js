@@ -6,7 +6,13 @@ import morgan from 'morgan';
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: [
+    "https://kuki-three.vercel.app",
+    "http://localhost:5173"
+  ],
+  credentials: true
+}));
 app.use(helmet());
 app.use(morgan('dev'));
 app.use(express.json());
