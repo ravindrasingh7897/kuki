@@ -61,7 +61,16 @@ cd kuki
 - View animated charts and tables.
 
 ## Screenshots
-(Add screenshots here)
+
+![Dashboard](./screenshots/dashboard.png)
+![Login Page](./screenshots/signin,signup.png)
+![Curd operation](./screenshots/add,editrecord.png)
+![API](./screenshots/api.png)
+![Data Filter With Reset Button](./screenshots/datafilterwithresetbutton.png)
+![Loading and Notification](./screenshots/loadingandnotification.png)
+![Data Table With Paging](./screenshots/datatablewithpaging.png)
+
+
 
 ## License
 MIT
