@@ -7,9 +7,19 @@ import { LogOut, BarChart3, Table2, Filter, Activity } from "lucide-react";
 import { DataTable } from "./DataTable";
 import { PollutionChart } from "./PollutionChart";
 import { DataFilters, FilterState } from "./DataFilters";
-import { mockPollutionData, getChartData, filterData, PollutionRecord } from "@/data/mockData";
+
 import { apiUrl } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
+
+type PollutionRecord = {
+  id: string;
+  year: number;
+  month: number;
+  location: string;
+  benzene: number;
+  toluene: number;
+  no: number;
+};
 
 interface DashboardLayoutProps {
   onLogout: () => void;
@@ -18,46 +28,44 @@ interface DashboardLayoutProps {
 export const DashboardLayout = ({ onLogout }: DashboardLayoutProps) => {
   const [data, setData] = useState<PollutionRecord[]>([]);
   const [filteredData, setFilteredData] = useState<PollutionRecord[]>([]);
+  const buildQuery = (filters: FilterState) => {
+    switch (filters.filterType) {
+      case 'single-year':
+        return `?year=${filters.year}`;
+      case 'year-range':
+        return `?startYear=${filters.startYear}&endYear=${filters.endYear}`;
+      case 'year-month-range':
+        return `?year=${filters.year}&startMonth=${filters.startMonth}&endMonth=${filters.endMonth}`;
+      default:
+        return '?year=2021';
+    }
+  };
+
+  const fetchData = async (query = buildQuery(filters)) => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(apiUrl(`/api/data${query}`), {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) throw new Error("Failed to fetch data");
+      const json = await response.json();
+      setData(json);
+      setFilteredData(json);
+    } catch (err: any) {
+      toast({
+        title: "Failed to load data",
+        description: err.message || "Unknown error",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const token = localStorage.getItem("token");
-  const response = await fetch(apiUrl("/api/opengds"), {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        if (!response.ok) throw new Error("Failed to fetch data");
-        const json = await response.json();
-        const monthMap = { Jan: 1, Feb: 2, Mar: 3, Apr: 4, May: 5, Jun: 6, Jul: 7, Aug: 8, Sep: 9, Oct: 10, Nov: 11, Dec: 12 };
-        const mapped = json.map((item: any) => {
-          const monthYear = item["Month - Year"] || "";
-          const [monthStr, yearStr] = monthYear.split("-");
-          const month = monthMap[monthStr] || 1;
-          const year = yearStr ? 2000 + parseInt(yearStr) : 2021;
-          return {
-            id: item._id?.$oid || item._id || Math.random().toString(),
-            location: item.City || item.city || "",
-            year,
-            month,
-            benzene: Number(item["Benzene (µg/m3)"]) || 0,
-            toluene: Number(item["Toluene (µg/m3)"]) || 0,
-            no: Number(item["NO (µg/m3)"]) || 0,
-          };
-        });
-        setData(mapped);
-        setFilteredData(mapped.filter(d => d.year === 2021));
-      } catch (err: any) {
-        toast({
-          title: "Failed to load data",
-          description: err.message || "Unknown error",
-          variant: "destructive",
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchData();
   }, []);
   const [loading, setLoading] = useState(false);
@@ -72,29 +80,22 @@ export const DashboardLayout = ({ onLogout }: DashboardLayoutProps) => {
   const { toast } = useToast();
 
   const applyFilters = () => {
-    setLoading(true);
-    const filtered = filterData(data, filters);
-    setFilteredData(filtered);
-    setLoading(false);
-    toast({
-      title: "Filters applied",
-      description: `Found ${filtered.length} records matching your criteria.`,
-    });
+    fetchData(buildQuery(filters));
   };
 
   const handleEdit = async (record: PollutionRecord) => {
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
-      const monthAbbrs = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
       const payload = {
-        City: record.location,
-        "Month - Year": `${monthAbbrs[(record.month || 1) - 1]}-${String(record.year).slice(-2)}`,
-        "NO (µg/m3)": record.no,
-        "Benzene (µg/m3)": record.benzene,
-        "Toluene (µg/m3)": record.toluene,
+        year: record.year,
+        month: record.month,
+        location: record.location,
+        Benzene: record.benzene,
+        Toluene: record.toluene,
+        NO: record.no,
       };
-  const response = await fetch(apiUrl(`/api/opengds/${record.id}`), {
+      const response = await fetch(apiUrl(`/api/data/${record.id}`), {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -103,32 +104,6 @@ export const DashboardLayout = ({ onLogout }: DashboardLayoutProps) => {
         body: JSON.stringify(payload),
       });
       if (!response.ok) throw new Error("Failed to update record");
-      
-      const fetchData = async () => {
-  const response = await fetch(apiUrl("/api/opengds"), {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!response.ok) throw new Error("Failed to fetch data");
-        const json = await response.json();
-        const monthMap = { Jan: 1, Feb: 2, Mar: 3, Apr: 4, May: 5, Jun: 6, Jul: 7, Aug: 8, Sep: 9, Oct: 10, Nov: 11, Dec: 12 };
-        const mapped = json.map((item: any) => {
-          const monthYear = item["Month - Year"] || "";
-          const [monthStr, yearStr] = monthYear.split("-");
-          const month = monthMap[monthStr] || 1;
-          const year = yearStr ? 2000 + parseInt(yearStr) : 2021;
-          return {
-            id: item._id?.$oid || item._id || Math.random().toString(),
-            location: item.City || item.city || "",
-            year,
-            month,
-            benzene: Number(item["Benzene (µg/m3)"]) || 0,
-            toluene: Number(item["Toluene (µg/m3)"]) || 0,
-            no: Number(item["NO (µg/m3)"]) || 0,
-          };
-        });
-        setData(mapped);
-        setFilteredData(filterData(mapped, filters));
-      };
       await fetchData();
       toast({ title: "Record updated", description: "Pollution record has been updated successfully." });
     } catch (err: any) {
@@ -142,38 +117,13 @@ export const DashboardLayout = ({ onLogout }: DashboardLayoutProps) => {
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
-  const response = await fetch(apiUrl(`/api/opengds/${id}`), {
+      const response = await fetch(apiUrl(`/api/data/${id}`), {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
       if (!response.ok) throw new Error("Failed to delete record");
-      const fetchData = async () => {
-  const response = await fetch(apiUrl("/api/opengds"), {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!response.ok) throw new Error("Failed to fetch data");
-        const json = await response.json();
-        const monthMap = { Jan: 1, Feb: 2, Mar: 3, Apr: 4, May: 5, Jun: 6, Jul: 7, Aug: 8, Sep: 9, Oct: 10, Nov: 11, Dec: 12 };
-        const mapped = json.map((item: any) => {
-          const monthYear = item["Month - Year"] || "";
-          const [monthStr, yearStr] = monthYear.split("-");
-          const month = monthMap[monthStr] || 1;
-          const year = yearStr ? 2000 + parseInt(yearStr) : 2021;
-          return {
-            id: item._id?.$oid || item._id || Math.random().toString(),
-            location: item.City || item.city || "",
-            year,
-            month,
-            benzene: Number(item["Benzene (µg/m3)"]) || 0,
-            toluene: Number(item["Toluene (µg/m3)"]) || 0,
-            no: Number(item["NO (µg/m3)"]) || 0,
-          };
-        });
-        setData(mapped);
-        setFilteredData(filterData(mapped, filters));
-      };
       await fetchData();
       toast({ title: "Record deleted", description: "Pollution record has been deleted successfully." });
     } catch (err: any) {
@@ -187,16 +137,15 @@ export const DashboardLayout = ({ onLogout }: DashboardLayoutProps) => {
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
-      
-      const monthAbbrs = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
       const payload = {
-        City: newRecord.location,
-        "Month - Year": `${monthAbbrs[(newRecord.month || 1) - 1]}-${String(newRecord.year).slice(-2)}`,
-        "NO (µg/m3)": newRecord.no,
-        "Benzene (µg/m3)": newRecord.benzene,
-        "Toluene (µg/m3)": newRecord.toluene,
+        year: newRecord.year,
+        month: newRecord.month,
+        location: newRecord.location,
+        Benzene: newRecord.benzene,
+        Toluene: newRecord.toluene,
+        NO: newRecord.no,
       };
-  const response = await fetch(apiUrl("/api/opengds"), {
+      const response = await fetch(apiUrl("/api/data"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -205,32 +154,6 @@ export const DashboardLayout = ({ onLogout }: DashboardLayoutProps) => {
         body: JSON.stringify(payload),
       });
       if (!response.ok) throw new Error("Failed to add record");
-      
-      const fetchData = async () => {
-  const response = await fetch(apiUrl("/api/opengds"), {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!response.ok) throw new Error("Failed to fetch data");
-        const json = await response.json();
-        const monthMap = { Jan: 1, Feb: 2, Mar: 3, Apr: 4, May: 5, Jun: 6, Jul: 7, Aug: 8, Sep: 9, Oct: 10, Nov: 11, Dec: 12 };
-        const mapped = json.map((item: any) => {
-          const monthYear = item["Month - Year"] || "";
-          const [monthStr, yearStr] = monthYear.split("-");
-          const month = monthMap[monthStr] || 1;
-          const year = yearStr ? 2000 + parseInt(yearStr) : 2021;
-          return {
-            id: item._id?.$oid || item._id || Math.random().toString(),
-            location: item.City || item.city || "",
-            year,
-            month,
-            benzene: Number(item["Benzene (µg/m3)"]) || 0,
-            toluene: Number(item["Toluene (µg/m3)"]) || 0,
-            no: Number(item["NO (µg/m3)"]) || 0,
-          };
-        });
-        setData(mapped);
-        setFilteredData(filterData(mapped, filters));
-      };
       await fetchData();
       toast({ title: "Record added", description: "New pollution record has been added successfully." });
     } catch (err: any) {
@@ -240,7 +163,14 @@ export const DashboardLayout = ({ onLogout }: DashboardLayoutProps) => {
     }
   };
 
-  const chartData = getChartData(filteredData);
+  // Chart data logic
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const chartData = filteredData.map(record => ({
+    month: `${monthNames[record.month - 1]} ${String(record.year).slice(-2)}`,
+    Benzene: record.benzene,
+    Toluene: record.toluene,
+    NO: record.no,
+  }));
   const currentYear = filters.filterType === 'single-year' ? filters.year : 
                      filters.filterType === 'year-month-range' ? filters.year : 
                      `${filters.startYear}-${filters.endYear}`;

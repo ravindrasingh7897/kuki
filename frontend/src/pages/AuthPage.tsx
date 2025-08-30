@@ -1,13 +1,15 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { SignupForm } from "@/components/auth/SignupForm";
 
-interface AuthPageProps {
-  onAuthSuccess: () => void;
-}
-
-export const AuthPage = ({ onAuthSuccess }: AuthPageProps) => {
+export const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
+  const navigate = useNavigate();
+
+  const handleAuthSuccess = () => {
+    navigate("/dashboard", { replace: true });
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-background p-4">
@@ -15,12 +17,12 @@ export const AuthPage = ({ onAuthSuccess }: AuthPageProps) => {
         {isLogin ? (
           <LoginForm
             onToggleMode={() => setIsLogin(false)}
-            onLoginSuccess={onAuthSuccess}
+            onLoginSuccess={handleAuthSuccess}
           />
         ) : (
           <SignupForm
             onToggleMode={() => setIsLogin(true)}
-            onSignupSuccess={onAuthSuccess}
+            onSignupSuccess={handleAuthSuccess}
           />
         )}
       </div>
