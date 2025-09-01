@@ -32,7 +32,7 @@ const Index = () => {
   }
 
   if (!isAuthenticated) {
-    return <AuthPage onAuthSuccess={handleAuthSuccess} />;
+    return <AuthPage />;
   }
 
   return <DashboardLayout onLogout={handleLogout} />;
