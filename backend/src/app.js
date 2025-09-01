@@ -21,7 +21,6 @@ app.use(express.urlencoded({ extended: true }));
 
 import authRoutes from './routes/auth.js';
 import dataRoutes from './routes/data.js';
-import opengdsRoutes from './routes/opengds.js';
 
 // Health check route
 app.get('/', (req, res) => {
@@ -31,7 +30,6 @@ app.get('/', (req, res) => {
 // API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/data', dataRoutes);
-app.use('/api/opengds', opengdsRoutes);
 
 // 404 handler
 app.use((req, res, next) => {
