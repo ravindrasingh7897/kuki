@@ -21,7 +21,17 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Edit2, Trash2, Plus, ChevronLeft, ChevronRight } from "lucide-react";
-import { PollutionRecord } from "@/data/mockData";
+
+// Define PollutionRecord type locally (matches backend and dashboard)
+type PollutionRecord = {
+  id: string;
+  year: number;
+  month: number;
+  location: string;
+  benzene: number;
+  toluene: number;
+  no: number;
+};
 import { useToast } from "@/hooks/use-toast";
 
 interface DataTableProps {
